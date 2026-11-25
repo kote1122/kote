@@ -1,0 +1,52 @@
+<!DOCTYPE html><html lang="ka"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css"><title>სასწავლო მასალები | მასწავლებელი კოტე</title></head><body>
+<header class="top"><div class="wrap"><a class="brand" href="index.html"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#f6c445"/><path d="M12 58c2-12 10-16 20-16s18 4 20 16z" fill="#2f6fa8"/><path d="M26 43l6 9 6-9z" fill="#fff"/><circle cx="32" cy="30" r="11" fill="#f2b68c"/><path d="M20 30c-2-14 8-18 14-17 8 0 12 7 10 17-2-7-6-9-12-9s-10 2-12 9z" fill="#4b2e1e"/></svg><span>მასწავლებელი<br>კოტე</span></a><nav aria-label="მენიუ"><a href="index.html">მთავარი</a><a href="index.html#about">ჩემს შესახებ</a><a href="materials.html" aria-current="page">სასწავლო მასალები</a><a href="index.html#contact">კონტაქტი</a></nav></div></header>
+<main>
+<div class="page-head"><div class="wrap"><h1>სასწავლო მასალები</h1><p>აირჩიე საქაღალდე, კლასი ან საგანი და ჩამოტვირთე საჭირო ფაილი.</p></div></div>
+<div class="wrap">
+<div class="filters">
+<input id="q" type="search" placeholder="ძიება სახელით" aria-label="ძიება">
+<select id="type" aria-label="საქაღალდე"></select>
+<select id="grade" aria-label="კლასი"></select>
+<select id="subject" aria-label="საგანი"></select>
+</div>
+<p class="count" id="count"></p>
+<ul class="list" id="list"></ul>
+</div>
+</main>
+<footer><div class="wrap">© მასწავლებელი კოტე</div></footer>
+<script src="materials.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const order = ["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function fill(sel, key, label){
+  const vals = [...new Set(MATERIALS.map(m => m[key]).filter(Boolean))];
+  key === "grade" ? vals.sort((a,b) => order.indexOf(a) - order.indexOf(b)) : vals.sort((a,b) => a.localeCompare(b,"ka"));
+  sel.innerHTML = '<option value="">' + label + '</option>' + vals.map(v => '<option>' + esc(v) + '</option>').join("");
+}
+function render(){
+  const q = $("q").value.trim().toLowerCase();
+  const items = MATERIALS.filter(m =>
+    (!$("grade").value || m.grade === $("grade").value) &&
+    (!$("subject").value || m.subject === $("subject").value) &&
+    (!$("type").value || m.type === $("type").value) &&
+    (!q || (m.title + " " + (m.description||"")).toLowerCase().includes(q)));
+  $("count").textContent = "ნაპოვნია: " + items.length;
+  $("list").innerHTML = items.length ? items.map(m => `
+    <li><div class="info"><h2>${esc(m.title)}</h2><div class="tags">
+      ${m.type ? `<span class="tag">${esc(m.type)}</span>` : ""}
+      ${m.grade ? `<span class="tag">${esc(m.grade)} კლასი</span>` : ""}
+      ${m.subject ? `<span class="tag">${esc(m.subject)}</span>` : ""}</div>
+      ${m.description ? `<p class="desc">${esc(m.description)}</p>` : ""}</div>
+      <a class="btn" href="${esc(m.file)}" ${/^https?:/.test(m.file) ? 'target="_blank" rel="noopener"' : "download"}>${/^https?:/.test(m.file) ? "გახსნა" : "ჩამოტვირთვა"}</a></li>`).join("")
+    : '<li class="empty">ამ პირობებით მასალა ვერ მოიძებნა.</li>';
+}
+fill($("type"),"type","ყველა საქაღალდე");
+fill($("grade"),"grade","ყველა კლასი");
+fill($("subject"),"subject","ყველა საგანი");
+const t = new URLSearchParams(location.search).get("type");
+if (t) { if (![...$("type").options].some(o => o.value === t)) $("type").add(new Option(t, t)); $("type").value = t; }
+["q","grade","subject","type"].forEach(id => $(id).addEventListener("input", render));
+render();
+</script>
+</body></html>
